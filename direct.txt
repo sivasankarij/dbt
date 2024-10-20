@@ -1,0 +1,82 @@
+begin
+	
+	
+	delete from fin_acctg_ops.ref_cost_ctr;		
+	
+	Insert into fin_acctg_ops.ref_cost_ctr( 
+		select
+	          * 
+			from		
+				(
+
+					select 
+					c.kostl as cost_ctr_nbr,
+					t.ktext as cost_ctr_desc,
+					t.ltext as cost_ctr_long_desc,
+					c.func_area as fctn_area_cd,
+					c.prctr as prft_ctr_nbr,
+					c.bukrs as co_cd,
+					c.abtei as chnl_cd,
+					
+					case 
+					when (c.bkzkp='X' or c.pkzkp='X' or c.bkzks='X' or c.pkzks='X') then 'FALSE' 
+					else 'TRUE' 
+					end as cost_ctr_actv_ind,
+					
+					c.waers as curr_cd,
+									
+					case 
+					when c.verak_user='DDIC' then 'TRUE'
+					else 'FALSE'
+					end as ufc_ind,
+					
+					c.kokrs as cntl_area_cd,
+					c.verak as pers_resp_nm,
+					c.land1 as ctry_cd,
+					c.ort01 as city_nm,
+					c.ort02 as distrct_nm,
+					c.pstlz as pstl_cd,
+					c.khinr as std_hier_area_cd,
+					c.kosar as cost_ctr_catg_cd,
+					tk.ktext as cost_ctr_catg_desc,
+					c.datab as valid_from_dt,
+					c.datbi as valid_to_dt,
+					c.ersda as cre_dt,
+					c.usnam as user_id,
+	--				c.bkzkp as lock_ind_actl_prmry_postng,
+	--				c.gsber as bus_area,
+					c.verak_user as user_resp_id,
+					l.laiso as lng_cd,
+					md5(c.src_nm || c.mandt || c.kokrs || c.kostl || c.datbi ) as hash_key,
+					c.src_nm,
+					c.kortex_dprct_ts,
+					c.kortex_upld_ts
+					
+					
+					  from stage.kna_ecc_cost_ctr_mstr_csks c
+					
+					  left outer join stage.kna_ecc_cost_ctr_mstr_cskt t 
+					  on c.kostl=t.kostl and t.spras='E'
+					  
+					  left outer join stage.kna_ecc_lng_mstr_t002 l
+					  on t.spras = l.spras 
+					   
+					  left outer join stage.kna_ecc_cost_ctr_mstr_tkt05 as tk
+					  on c.kosar = tk.kosar  and tk.spras = 'E'
+					 
+					  left outer join stage.ref_cost_ctr_spin rccs
+					  on c.kostl = rccs.cost_ctr_nbr 
+					  where (rccs.spin_owner_nm <>'CEREAL')
+					 
+					   )
+					   
+					  );
+     
+   
+	COMMIT;
+
+EXCEPTION WHEN OTHERS then
+	RAISE EXCEPTION 'An error occurred.';
+	rollback;
+
+end;
